@@ -28,7 +28,7 @@ export class Point {
       this.sunset = { ...res.data.results };
       this.day_length = res.data.results.day_length;
       this.error = false
-    } catch ($e) {
+    } catch (e) {
       this.error = true
     }
   }
