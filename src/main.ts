@@ -7,6 +7,13 @@
  * parallel queue
  * https://github.com/emilbayes/parallel-queue#readme
  *
+ * To Build:
+ * npm run build:watch
+ *
+ * To Run:
+ * cd ./build/src
+ * node main.js
+ *
  */
 
 import { Point } from './Point';
@@ -21,15 +28,16 @@ const APoint = curry((limit, n) => n > limit ? false : [new Point(), n + 1]);
 // create an array of Points
 const Points: Point[] = unfold(APoint(100), 1);
 
-console.log(`${Points.length} tasks to complete...`);
+process.stdout.write(`${Points.length} tasks to complete...`);
 
 // setup a parallel queue for Asynchronous api fetching
 const queue: ParallelQueue = new ParallelQueue(4);
 
 // iterate through all the points and add the Point.fetchFromAPI to the queue
-Points.map((aresult) => {
+Points.map((aresult, index) => {
   queue.push(async (done) => {
     await aresult.fetchFromAPI();
+    process.stdout.write(".");
     done();
   });
 });
