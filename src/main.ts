@@ -1,39 +1,67 @@
+/**
+ *
+ * Jon Leahy
+ * 12th Feb 2020
+ *
+ * The following queue class wasn't created by myself:
+ * parallel queue
+ * https://github.com/emilbayes/parallel-queue#readme
+ *
+ */
+
 import { Point } from './Point';
 import { ParallelQueue } from './parallelqueue';
 import * as moment from 'moment';
-import * as R from 'ramda'
+import * as R from 'ramda';
 
 const { unfold, curry } = R;
 
-const point = curry((limit, n) => n > limit ? false : [new Point(), n + 1]);
+const APoint = curry((limit, n) => n > limit ? false : [new Point(), n + 1]);
 
-const results: Point[] = unfold(point(12), 1);
+// create an array of Points
+const Points: Point[] = unfold(APoint(100), 1);
 
-let queue: ParallelQueue = new ParallelQueue(5);
+console.log(`${Points.length} tasks to complete...`);
 
-queue.complete(function() {
-  console.log('All tasks completed');
-  console.log(results);
+// here's the queue to allow parallel Asynchronous jobs
+const queue: ParallelQueue = new ParallelQueue(5);
 
-  // https://stackoverflow.com/questions/4020796/finding-the-max-value-of-an-attribute-in-an-array-of-objects
-  const result: number = Math.min.apply(Math, results.map(function(o) {
-    return o.sunRise;
-  }));
-
-  const res: Point = results.find(function(aresult) {
-    return aresult.sunRise == result;
-  });
-
-  console.log(`Locations: ${res.lat}, ${res.long}`);
-  console.log(`DayLength: ${res.day_length}`)
-  console.log(`Day: ${moment(res.sunrise).format("LLLL")} - ${moment(res.sunset).format("LLLL")}`)
-});
-
-results.map((aresult) => {
+// iterate through all the points and add the Point.fetchFromAPI to the queue
+Points.map((aresult) => {
   queue.push(async (done) => {
     await aresult.fetchFromAPI();
     done();
   });
 });
+
+// on queue complete
+queue.complete(function() {
+  console.log(`All ${Points.length} tasks completed`);
+
+  // find the point with the min. sunRise
+  const result: number = Math.min.apply(Math, Points.map(function(o) {
+    return o.sunRise;
+  }));
+
+  // find the point which matches the min sunRise above
+  const PointWithEarliestSunrise: Point = Points.find(function(aresult) {
+    return (aresult.sunRise == result && !aresult.error);
+  });
+
+  // give the user some feedback
+  if (PointWithEarliestSunrise) {
+    console.log(`Locations: ${PointWithEarliestSunrise.lat}, ${PointWithEarliestSunrise.long}`);
+    console.log(`DayLength: ${PointWithEarliestSunrise.day_length}`);
+    console.log(`Day: ${moment(PointWithEarliestSunrise.sunrise).format('LLLL')} - ${moment(PointWithEarliestSunrise.sunset).format('LLLL')}`);
+  }
+  // any errors?
+  // find the point which matches the min sunRise above
+  const errors: Point = Points.filter(function(aresult) {
+    return aresult.error == true;
+  });
+  (errors.length == 0 ? null : console.log(`There were ${errors.length} errors`));
+
+});
+
 
 
