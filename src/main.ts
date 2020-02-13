@@ -23,8 +23,8 @@ const Points: Point[] = unfold(APoint(100), 1);
 
 console.log(`${Points.length} tasks to complete...`);
 
-// here's the queue to allow parallel Asynchronous jobs
-const queue: ParallelQueue = new ParallelQueue(5);
+// setup a parallel queue for Asynchronous api fetching
+const queue: ParallelQueue = new ParallelQueue(4);
 
 // iterate through all the points and add the Point.fetchFromAPI to the queue
 Points.map((aresult) => {
@@ -34,7 +34,7 @@ Points.map((aresult) => {
   });
 });
 
-// on queue complete
+// when the parallel queue has completed
 queue.complete(function() {
   console.log(`All ${Points.length} tasks completed`);
 
@@ -56,7 +56,7 @@ queue.complete(function() {
   }
   // any errors?
   // find the point which matches the min sunRise above
-  const errors: Point = Points.filter(function(aresult) {
+  const errors: Point[] = Points.filter(function(aresult) {
     return aresult.error == true;
   });
   (errors.length == 0 ? null : console.log(`There were ${errors.length} errors`));
