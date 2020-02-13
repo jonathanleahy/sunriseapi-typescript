@@ -4,8 +4,7 @@
  * 12th Feb 2020
  *
  * The following queue class wasn't created by myself:
- * parallel queue
- * https://github.com/emilbayes/parallel-queue#readme
+ * parallel queue - https://github.com/emilbayes/parallel-queue#readme
  *
  */
 
@@ -14,20 +13,23 @@ import { ParallelQueue } from './parallelqueue';
 import * as moment from 'moment';
 import * as R from 'ramda';
 
+const MAX_POINTS = 100;
+const MAX_CONCURRENT_FETCHES = 4;
+
 const { unfold, curry } = R;
 
 const APoint = curry((limit, n) => n > limit ? false : [new Point(), n + 1]);
 
 // create an array of Points
-const Points: Point[] = unfold(APoint(100), 1);
+const Points: Point[] = unfold(APoint(MAX_POINTS), 1);
 
 process.stdout.write(`${Points.length} tasks to complete...`);
 
 // setup a parallel queue for Asynchronous api fetching
-const queue: ParallelQueue = new ParallelQueue(4);
+const queue: ParallelQueue = new ParallelQueue(MAX_CONCURRENT_FETCHES);
 
 // iterate through all the points and add the Point.fetchFromAPI to the queue
-Points.map((aresult, index) => {
+Points.map((aresult) => {
   queue.push(async (done) => {
     await aresult.fetchFromAPI();
     process.stdout.write(".");
@@ -37,7 +39,8 @@ Points.map((aresult, index) => {
 
 // when the parallel queue has completed
 queue.complete(function() {
-  console.log(`All ${Points.length} tasks completed`);
+  console.log(``);
+  console.log(`All ${Points.length} api fetches to completed`);
 
   // find the point with the min. sunRise
   const result: number = Math.min.apply(Math, Points.map(function(o) {
@@ -60,7 +63,7 @@ queue.complete(function() {
   const errors: Point[] = Points.filter(function(aresult) {
     return aresult.error == true;
   });
-  (errors.length == 0 ? null : console.log(`There were ${errors.length} errors`));
+  (errors.length == 0 ? null : console.log(`There were ${errors.length} failed API calls`));
 
 });
 
