@@ -7,13 +7,6 @@
  * parallel queue
  * https://github.com/emilbayes/parallel-queue#readme
  *
- * To Build:
- * npm run build:watch
- *
- * To Run:
- * cd ./build/src
- * node main.js
- *
  */
 
 import { Point } from './Point';
